@@ -33,6 +33,66 @@ fall back to reading from the environment when running locally.
 
 ## Repository layout
 
+### Chapter 3 setup and example types
+
+Use a separate environment for each framework, especially CrewAI and Google
+ADK. Python 3.12 was used for the Lab 7/8 checks recorded below; check each
+package's Python constraints before using a different interpreter version.
+Install the packages from the chosen notebook's installation cell. The
+pins in `Chapter 3/bakeoff/requirements.txt` belong to the separate bake-off
+scripts, not to every notebook.
+
+| Example | Main packages (plus the notebook's supporting dependencies) | Credential |
+| --- | --- | --- |
+| Lab 1: LangChain | `langchain`, `langchain-openai` | `OPENAI_API_KEY` |
+| Lab 2: Google ADK | `google-adk`, `google-genai` | `GOOGLE_API_KEY` |
+| Lab 3: CrewAI | `crewai[tools]` | `OPENAI_API_KEY` |
+| Lab 4: AutoGen | `autogen-agentchat`, `autogen-ext`, `autogen-core` | `OPENAI_API_KEY` |
+| Lab 5: OpenAI Agents SDK | `openai-agents` | `OPENAI_API_KEY` |
+| Lab 6: LlamaIndex | `llama-index`, `llama-index-llms-openai` | `OPENAI_API_KEY` |
+| Lab 7: Anthropic API, no tools | `anthropic` | `ANTHROPIC_API_KEY` |
+| Lab 8: Mistral, manual tool loop | `mistralai` | `MISTRAL_API_KEY` |
+| Lab 9: PydanticAI | `pydantic-ai` | `OPENAI_API_KEY` |
+| Bake-off Claude Agent SDK example | `claude-agent-sdk` | `ANTHROPIC_API_KEY` |
+
+The notebooks also install `pydantic` and `python-dotenv`. Export the required
+credential in the notebook process, or use Colab Secrets. Labs 7 and 8 now
+explicitly load a local `.env` file; installing `python-dotenv` alone does not
+load one. Never commit credentials.
+
+The notebooks and bake-off scripts solve the same P/E comparison task but
+are not interchangeable implementations. Lab 7 calls the Anthropic Messages
+API directly, without tools or an agent loop. The actual Claude Agent SDK
+workflow is `Chapter 3/bakeoff/claude_agent_sdk_agent.py`. Lab 8 uses Mistral's
+API-client SDK and a manual tool loop, not a separate agent framework.
+
+Check the model selected in each example. The bake-off's `common.py` controls
+the OpenAI-backed scripts only; provider-specific scripts and notebooks have
+their own settings. The Claude Agent SDK script currently leaves model
+selection to the SDK. Record the actual model before comparing outputs.
+Lab 7 defaults to `claude-sonnet-5`, with thinking explicitly disabled; set
+`CHAPTER3_ANTHROPIC_MODEL` only to a model compatible with the shown request.
+Mock finance data avoids a market-data subscription, but model calls still
+require network access and available provider credits.
+
+#### Chapter 3 correction checks (7 September 2026)
+
+- Python 3.12.14; `anthropic==1.4.0`, `mistralai==2.9.4`,
+  `pydantic==2.13.5`, `python-dotenv==1.2.3`; notebook validation with
+  `nbformat==5.11.1`. Lab 7/8 installation cells pin these application packages.
+- Fresh installation and `pip check` passed. Six offline regression tests
+  passed, including actual SDK request/response handling with mocked HTTP,
+  Lab 7 truncation/empty-response rejection, Lab 8 tool dispatch, notebook
+  validation and the scoring-script reference. Run
+  `python -m unittest discover -s tests -v` after installing the packages above.
+- Live validation is still pending: a provider-account prerequisite prevented
+  the Lab 7 run, and no test credential was available for Lab 8. Mocked responses do not establish model
+  accuracy, provider availability or successful end-to-end live execution.
+- These checks cover the changed Labs 7/8 and scoring reference, not all
+  Chapter 3 examples or all bake-off dependency combinations.
+
+### Folder guide
+
 ```text
 Chapter 1/        First-principles labs (Hanane)
 Chapter 2/        Memory and tool patterns (Hanane)

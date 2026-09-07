@@ -36,4 +36,4 @@ for i, (score, fw, best, worst) in enumerate(sorted(results, reverse=True), 1):
     print(f"{i:<5}{fw:<24}{score:<8.2f}{best:<11}{worst}")
 
 print("\nShortlist the top 2-3, then let a pilot decide (see the "
-      "'Pilot template' section in Chapter 3).")
+      "'Evaluation method at a glance' section, step 4, in Chapter 3).")
