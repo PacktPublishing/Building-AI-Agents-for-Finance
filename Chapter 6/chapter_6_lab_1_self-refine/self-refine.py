@@ -17,7 +17,7 @@ Draft a concise investment thesis based on the following financial data:
 
 {financials}
 
-Your thesis should cover: key business drivers, valuation, and 2-3 key risks. 
+Your thesis should cover key business drivers, valuation, and 2-3 key risks. 
 Cite only metrics present in the provided data [Original query]; flag any external claim as [unverified].
 Write 1-2 sentences for each section. 
 Be concise."""
@@ -63,7 +63,7 @@ def refine_thesis(thesis: str, feedback: str, financials: str, history_feedback:
 Revise the following investment thesis based on the reviewer feedback below.
 Produce an improved version that directly addresses each point in the feedback. 
 Cite only metrics present in the provided data [Original query]; flag any external claim as [unverified].
-Your thesis should cover the same sections than the original one: key business drivers, valuation, and 2-3 key risks. 
+Your thesis should cover the same sections as the original one: key business drivers, valuation, and 2-3 key risks. 
 Write 1-2 sentences for each section.
 Be concise.
 
