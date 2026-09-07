@@ -59,6 +59,8 @@ class ClaimRecord(BaseModel):
     deductible: float | None = None
     exclusions_found: list[str] = []
     coverage_reasoning: str = ""
+    coverage_reason_codes: list[str] = Field(default_factory=list)
+    coverage_evidence_complete: bool = False
 
     # Populated by Fraud Screener
     fraud_score: int | None = None
@@ -72,6 +74,8 @@ class ClaimRecord(BaseModel):
     # Populated by Decision Agent
     decision: str = ""
     decision_reasoning: str = ""
+    decision_reason_codes: list[str] = Field(default_factory=list)
+    compliance_issues: list[str] = Field(default_factory=list)
 
     # Audit trail
     audit_log: list[dict] = []
@@ -118,7 +122,7 @@ class FraudArgument(BaseModel):
 
 class ClaimDecision(BaseModel):
     """Final claim decision."""
-    decision: str  # "APPROVE", "DENY", "ESCALATE"
+    decision: str  # "APPROVED", "DENIED", "ESCALATED"
     payout_amount: float = 0.0
     reasoning: str = ""
     regulatory_rules_applied: list[str] = []

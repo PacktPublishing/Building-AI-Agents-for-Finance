@@ -137,7 +137,7 @@ def format_report_markdown(report: ResearchReport) -> str:
         # Revenue Growth
         lines.append(
             "| Revenue Growth | "
-            + " | ".join(f"{m.revenue_growth:+.1f}%" for m in report.company_metrics)
+            + " | ".join((f"{m.revenue_growth:+.1f}%" if m.revenue_growth is not None else "N/A") for m in report.company_metrics)
             + " |"
         )
         # EPS
@@ -150,7 +150,7 @@ def format_report_markdown(report: ResearchReport) -> str:
         lines.append(
             "| P/E Ratio | "
             + " | ".join(
-                f"{m.pe_ratio:.1f}x" if m.pe_ratio > 0 else "N/A"
+                f"{m.pe_ratio:.1f}x" if m.pe_ratio is not None and m.pe_ratio > 0 else "N/A"
                 for m in report.company_metrics
             )
             + " |"
@@ -158,19 +158,19 @@ def format_report_markdown(report: ResearchReport) -> str:
         # Gross Margin
         lines.append(
             "| Gross Margin | "
-            + " | ".join(f"{m.gross_margin:.1f}%" for m in report.company_metrics)
+            + " | ".join((f"{m.gross_margin:.1f}%" if m.gross_margin is not None else "N/A") for m in report.company_metrics)
             + " |"
         )
         # Operating Margin
         lines.append(
             "| Operating Margin | "
-            + " | ".join(f"{m.operating_margin:.1f}%" for m in report.company_metrics)
+            + " | ".join((f"{m.operating_margin:.1f}%" if m.operating_margin is not None else "N/A") for m in report.company_metrics)
             + " |"
         )
         # Market Cap
         lines.append(
             "| Market Cap | "
-            + " | ".join(f"${m.market_cap:,.0f}B" for m in report.company_metrics)
+            + " | ".join((f"${m.market_cap:,.0f}B" if m.market_cap is not None else "N/A") for m in report.company_metrics)
             + " |"
         )
         lines.append("")

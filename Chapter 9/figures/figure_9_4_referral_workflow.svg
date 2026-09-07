@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="630" viewBox="0 0 600 630">
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8Z" fill="#445164"/></marker></defs>
+<rect width="600" height="630" fill="white"/>
+<g font-family="Arial, Helvetica, sans-serif" font-size="14" text-anchor="middle" fill="#172332">
+<rect x="180" y="10" width="240" height="52" rx="10" fill="#e8eff9" stroke="#3670b0"/><text x="300" y="33">Flagged claim</text><text x="300" y="51">Evidence supplied to the lab</text>
+<rect x="20" y="100" width="560" height="99" rx="10" fill="#f5f3fa" stroke="#8771ad" stroke-dasharray="5 4"/><text x="300" y="123" font-weight="bold">Production extension: evidence gathering</text><text x="117" y="151">Document</text><text x="117" y="170">authenticity</text><text x="300" y="151">Network</text><text x="300" y="170">analysis</text><text x="480" y="151">Pattern</text><text x="480" y="170">analysis</text><text x="300" y="188" font-size="12">Not implemented as separate agents in the shipped lab</text>
+<rect x="120" y="235" width="360" height="60" rx="10" fill="#ffefef" stroke="#bf6464"/><text x="300" y="258" font-weight="bold">1. Fraud Advocate</text><text x="300" y="279">Argue for suspicion; state weaknesses</text>
+<rect x="120" y="330" width="360" height="60" rx="10" fill="#edf7f1" stroke="#4a8d69"/><text x="300" y="353" font-weight="bold">2. Legitimacy Advocate</text><text x="300" y="374">Read and challenge the opening argument</text>
+<rect x="120" y="425" width="360" height="60" rx="10" fill="#edf7f8" stroke="#4d8990"/><text x="300" y="448" font-weight="bold">3. Investigation Decision</text><text x="300" y="469">Weigh both arguments; recommend referral</text>
+<rect x="45" y="520" width="510" height="95" rx="10" fill="#edf2fa" stroke="#3670b0"/><text x="300" y="542" font-weight="bold">Free-text referral assessment</text><text x="300" y="563">strong_fraud_indicators / likely_fraud</text><text x="300" y="583">inconclusive / likely_legitimate</text><text x="300" y="603" font-weight="bold">Human review — not a finding of fraud</text>
+</g>
+<g stroke="#445164" stroke-width="1.6" fill="none" marker-end="url(#arrow)"><path d="M300 62V98"/><path d="M300 199V233"/><path d="M300 295V328"/><path d="M300 390V423"/><path d="M300 485V518"/></g>
+</svg>

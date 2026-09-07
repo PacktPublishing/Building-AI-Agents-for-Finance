@@ -91,15 +91,15 @@ class CompanyMetrics(BaseModel):
     ticker: str
     company_name: str = ""
     revenue: float = Field(description="Revenue in millions USD")
-    revenue_growth: float = Field(
-        default=0.0, description="Year-over-year revenue growth %"
+    revenue_growth: float | None = Field(
+        default=None, description="Year-over-year revenue growth %; None if unavailable"
     )
     eps: float = Field(description="Earnings per share")
-    pe_ratio: float = Field(default=0.0, description="Price-to-earnings ratio")
-    gross_margin: float = Field(default=0.0, description="Gross margin %")
-    operating_margin: float = Field(default=0.0, description="Operating margin %")
-    market_cap: float = Field(default=0.0, description="Market cap in billions USD")
-    period: str = Field(default="FY2024", description="Fiscal period, e.g., 'FY2024'")
+    pe_ratio: float | None = Field(default=None, description="Price-to-earnings ratio; None if unavailable or not meaningful")
+    gross_margin: float | None = Field(default=None, description="Gross margin %")
+    operating_margin: float | None = Field(default=None, description="Operating margin %")
+    market_cap: float | None = Field(default=None, description="Market cap in billions USD")
+    period: str | None = Field(default=None, description="Reported fiscal period; never inferred")
 
 
 # ---------------------------------------------------------------------------
@@ -142,8 +142,7 @@ def check_api_key(key_name: str) -> bool:
     """Check if an API key is set and print its status."""
     key = os.getenv(key_name)
     status = "+" if key else "X"
-    masked = key[:10] + "..." if key else "Not found"
-    print(f"  [{status}] {key_name}: {masked}")
+    print(f"  [{status}] {key_name}: {'configured' if key else 'not configured'}")
     return bool(key)
 
 
@@ -151,16 +150,8 @@ def check_all_keys() -> bool:
     """Check all required API keys and return True if all are present."""
     print("Checking API keys...")
 
-    # LLM provider key — check whichever provider is configured
-    llm_ok = False
-    if os.getenv("OPENAI_API_KEY"):
-        check_api_key("OPENAI_API_KEY")
-        llm_ok = True
-    elif os.getenv("ANTHROPIC_API_KEY"):
-        check_api_key("ANTHROPIC_API_KEY")
-        llm_ok = True
-    else:
-        print("  [X] No LLM API key found (set OPENAI_API_KEY or ANTHROPIC_API_KEY)")
+    # The supplied model configuration and dependency extras use OpenAI.
+    llm_ok = check_api_key("OPENAI_API_KEY")
 
     data_keys = ["FINANCIAL_DATASETS_API_KEY", "TAVILY_API_KEY"]
     results = [check_api_key(k) for k in data_keys]

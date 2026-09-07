@@ -84,6 +84,8 @@ async def execute_plan(plan: ResearchPlan) -> dict[int, str]:
             task.status = TaskStatus.IN_PROGRESS
             try:
                 result = await _route_and_execute(task, results)
+                if not isinstance(result, str) or not result.strip():
+                    raise ValueError("Task returned no evidence")
                 task.status = TaskStatus.COMPLETED
                 task.result = result
                 return (task.id, result)

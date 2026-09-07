@@ -39,7 +39,7 @@ class ClaimStatus(str, Enum):
 
 
 class FraudDetermination(str, Enum):
-    CONFIRMED_FRAUD = "confirmed_fraud"
+    STRONG_FRAUD_INDICATORS = "strong_fraud_indicators"
     LIKELY_FRAUD = "likely_fraud"
     INCONCLUSIVE = "inconclusive"
     LIKELY_LEGITIMATE = "likely_legitimate"
@@ -67,6 +67,8 @@ class ClaimRecord(BaseModel):
     deductible: float | None = None
     exclusions_found: list[str] = []
     coverage_reasoning: str = ""
+    coverage_reason_codes: list[str] = Field(default_factory=list)
+    coverage_evidence_complete: bool = False
 
     fraud_score: int | None = None
     red_flags: list[str] = []
@@ -77,6 +79,8 @@ class ClaimRecord(BaseModel):
 
     decision: str = ""
     decision_reasoning: str = ""
+    decision_reason_codes: list[str] = Field(default_factory=list)
+    compliance_issues: list[str] = Field(default_factory=list)
 
     audit_log: list[dict] = []
 
@@ -103,7 +107,7 @@ class FraudArgument(BaseModel):
 
 
 class ClaimDecision(BaseModel):
-    decision: str  # "APPROVE" / "DENY" / "ESCALATE"
+    decision: str  # "APPROVED" / "DENIED" / "ESCALATED"
     payout_amount: float = 0.0
     reasoning: str = ""
     regulatory_rules_applied: list[str] = []

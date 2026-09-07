@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="660" height="740" viewBox="0 0 660 740">
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8Z" fill="#445164"/></marker></defs>
+<rect width="660" height="740" fill="white"/>
+<g font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#172332" text-anchor="middle">
+<rect x="185" y="10" width="290" height="62" rx="9" fill="#fff5db" stroke="#b99032"/><text x="330" y="34" font-weight="bold">1. Plan</text><text x="330" y="56">Research question and task dependencies</text>
+<rect x="10" y="105" width="640" height="100" rx="9" fill="#f6f0fa" stroke="#9272ac"/><text x="330" y="128" font-weight="bold">2. Execute independent retrieval tasks in parallel</text>
+<g font-size="12"><text x="77" y="156">Task 1</text><text x="77" y="176">NVDA metrics</text><text x="203" y="156">Task 2</text><text x="203" y="176">AMD metrics</text><text x="330" y="156">Task 3</text><text x="330" y="176">INTC metrics</text><text x="455" y="156">Task 4</text><text x="455" y="176">SEC risk factors</text><text x="581" y="156">Task 5</text><text x="581" y="176">Market news</text></g>
+<rect x="185" y="239" width="290" height="50" rx="9" fill="#fff5db" stroke="#b99032"/><text x="330" y="260" font-weight="bold">Task 6: Comparative analysis</text><text x="330" y="278">Uses completed retrieval results</text>
+<rect x="185" y="325" width="290" height="50" rx="9" fill="#fff5db" stroke="#b99032"/><text x="330" y="346" font-weight="bold">Task 7: Draft narrative</text><text x="330" y="364">Uses the preceding analysis</text>
+<rect x="185" y="411" width="290" height="75" rx="9" fill="#edf7f1" stroke="#4a8d69"/><text x="330" y="435" font-weight="bold">3. Validate</text><text x="330" y="456">Completed tasks, typed evidence</text><text x="330" y="475">and numerical checks</text>
+<rect x="185" y="552" width="290" height="61" rx="9" fill="#edf2fa" stroke="#3670b0"/><text x="330" y="576" font-weight="bold">4. Synthesize validated findings</text><text x="330" y="598">Structured research report</text>
+<rect x="185" y="665" width="290" height="50" rx="9" fill="#e8eff9" stroke="#3670b0"/><text x="330" y="695" font-weight="bold">Export report with source references</text>
+<text x="353" y="523" font-size="12">valid</text><text x="563" y="438" font-size="12">invalid</text><text x="556" y="460" font-size="12">retry planning</text><text x="556" y="478" font-size="12">while retries remain</text>
+<rect x="496" y="516" width="158" height="81" rx="9" fill="#ffefef" stroke="#bf6464"/><text x="575" y="539" font-size="12">Retries exhausted:</text><text x="575" y="559" font-weight="bold">STOP</text><text x="575" y="580" font-size="12">No final report</text>
+</g>
+<g stroke="#445164" stroke-width="1.6" fill="none" marker-end="url(#arrow)"><path d="M330 72V103"/><path d="M330 205V237"/><path d="M330 289V323"/><path d="M330 375V409"/><path d="M330 486V550"/><path d="M330 613V663"/><path d="M475 450H655V28H477"/><path d="M655 450V507H575V514"/></g>
+</svg>

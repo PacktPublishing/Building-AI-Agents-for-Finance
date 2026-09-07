@@ -54,10 +54,12 @@ async def search_financial_news(
             )
             resp.raise_for_status()
 
-        results = resp.json().get("results", [])
+        results = [r for r in resp.json().get("results", [])
+                   if isinstance(r, dict) and isinstance(r.get("content"), str)
+                   and r["content"].strip() and r.get("url")]
 
         if not results:
-            return f"No recent news found for: {query}"
+            raise ValueError(f"No recent news found for: {query}")
 
         formatted = []
         for i, r in enumerate(results, 1):
@@ -78,13 +80,13 @@ async def search_financial_news(
         return header + "\n\n" + "\n\n".join(formatted)
 
     except httpx.HTTPStatusError as e:
-        return (
+        raise ValueError(
             f"Web search error (HTTP {e.response.status_code}): "
             f"Could not search for '{query}'. "
             f"Check your TAVILY_API_KEY configuration."
         )
     except Exception as e:
-        return f"Web search error: {str(e)}"
+        raise ValueError("Financial news retrieval failed") from e
 
 
 async def search_general(query: str, max_results: int = 3) -> str:
@@ -113,10 +115,12 @@ async def search_general(query: str, max_results: int = 3) -> str:
             )
             resp.raise_for_status()
 
-        results = resp.json().get("results", [])
+        results = [r for r in resp.json().get("results", [])
+                   if isinstance(r, dict) and isinstance(r.get("content"), str)
+                   and r["content"].strip() and r.get("url")]
 
         if not results:
-            return f"No results found for: {query}"
+            raise ValueError(f"No results found for: {query}")
 
         formatted = []
         for i, r in enumerate(results, 1):
@@ -128,4 +132,4 @@ async def search_general(query: str, max_results: int = 3) -> str:
         return "\n\n".join(formatted)
 
     except Exception as e:
-        return f"Search error: {str(e)}"
+        raise ValueError("Web search retrieval failed") from e

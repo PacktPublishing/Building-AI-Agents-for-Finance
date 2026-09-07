@@ -2,9 +2,9 @@
 
 Companion code for Chapter 11: a complete evaluation harness for the
 KYC onboarding agent the chapter specifies as its system under test.
-The harness runs in CI on every commit, captures production traces,
-calibrates an LLM-as-a-judge against human labels, detects drift, and
-produces a model risk report. A deterministic mock of the KYC pipeline
+The harness includes a CI workflow template, a production-trace integration
+stub, judge-calibration utilities, drift detection, and model risk reporting.
+CI and production trace capture require explicit setup. A deterministic mock of the KYC pipeline
 ships with the harness, so everything runs end to end out of the box;
 an adapter hook lets you plug in a real implementation.
 
@@ -60,7 +60,19 @@ you wire in a real agent.
 
 The exit code is `0` if every catastrophic-severity metric passes its
 threshold and the weighted score is `>= 0.85`; nonzero otherwise. CI
-uses this as the production-promotion gate.
+can use this as a production-promotion gate after configuration.
+
+To activate CI, copy `ci/github_actions.yml` into the repository-root
+`.github/workflows/` directory. The workflow starts on every pull request and
+push to main; evaluation runs for changes to Chapter 11 or workflow files.
+Configure **kyc-eval-required** (the final gate, not the conditional scorecard
+job) as required in branch protection or repository rules. It passes unrelated
+changes only after change detection succeeds, and blocks relevant changes if
+evaluation fails, is cancelled or is unexpectedly skipped. Do not add
+workflow-level path filters: skipped required workflows can leave unrelated
+pull requests pending. The summary is supplied as a downloadable artifact;
+the workflow needs no pull-request write permission. Merely including the
+template in `ci/` does not activate GitHub Actions or block merges.
 
 ## With a real KYC pipeline
 
