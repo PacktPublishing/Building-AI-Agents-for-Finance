@@ -182,9 +182,9 @@ async def deep_search(
             )
             log(f"  Replanning to address {len(gap_info)} issue(s)...\n")
         else:
-            log(
-                "  Max replan attempts reached. "
-                "Proceeding with available data.\n"
+            raise RuntimeError(
+                "Research validation failed after all replans; synthesis blocked: "
+                + "; ".join(validation.errors + validation.gaps)
             )
 
     # ----------------------------------------------------------

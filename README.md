@@ -91,6 +91,30 @@ require network access and available provider credits.
 - These checks cover the changed Labs 7/8 and scoring reference, not all
   Chapter 3 examples or all bake-off dependency combinations.
 
+#### Cross-chapter correction checks (7 September 2026)
+
+The correction branch also aligns Chapter 2 notebook annotations, Chapter 4
+DCF inputs and verdicts, Chapter 5 failed-research handling, Chapter 9 claims
+evidence checks and referral terminology, and Chapter 11 CI setup wording.
+The source and notebook versions of the affected Chapter 5/9 controls are
+covered by offline fixture tests. There are 33 passing tests in total; run
+`python -m unittest discover -s tests -v` with the packages listed above and
+`httpx==0.28.1`. These tests execute the relevant function bodies and mocked
+HTTP calls, not the complete framework workflows or live providers.
+
+The DCF tool is educational: provider `freeCashflow` is not verified unlevered
+FCFF. It no longer substitutes operating cash flow, invents missing share
+counts, or treats a missing price as an overvaluation verdict. Match the cash
+flow definition to the discount rate before real valuation use; see
+[Damodaran's valuation framework](https://pages.stern.nyu.edu/~adamodar/New_Home_Page/lectures/val.html).
+
+Corrected, editable figure sources are included for
+[Figure 5.11](./Chapter%205/src/diagrams/svg/figure_5_11_corrected.svg) and
+[Figure 9.4](./Chapter%209/figures/figure_9_4_referral_workflow.svg).
+The Chapter 9 checks are simplified evidence controls, not legal compliance
+certification or a finding of fraud. Live end-to-end verification remains
+pending; a passing fixture suite does not establish production readiness.
+
 ### Folder guide
 
 ```text

@@ -5,6 +5,7 @@ Tools for intrinsic value estimation: DCF model and peer multiples comparison.
 """
 
 import json
+import math
 import yfinance as yf
 from agents import function_tool
 
@@ -116,30 +117,37 @@ def run_dcf_model(
         stock = yf.Ticker(ticker.upper())
         info  = stock.info
 
-        # --- Base FCF: prefer trailing FCF, fall back to operating CF ---
-        base_fcf = info.get("freeCashflow") or info.get("operatingCashflow")
-        if base_fcf is None or float(base_fcf) <= 0:
+        # Provider FCF is a teaching proxy, not verified unlevered FCFF.
+        # Operating cash flow alone omits capital expenditure: no fallback.
+        base_fcf = _safe_float(info.get("freeCashflow"))
+        if base_fcf is None or base_fcf <= 0:
             return json.dumps({
-                "error": "Cannot run DCF: free cash flow is zero or negative. DCF is not applicable.",
+                "error": "This simplified DCF requires positive, finite free cash flow.",
                 "ticker": ticker.upper(),
             })
 
         base_fcf = float(base_fcf)
-        shares   = float(info.get("sharesOutstanding") or info.get("impliedSharesOutstanding") or 1)
+        shares = _safe_float(info.get("sharesOutstanding") or info.get("impliedSharesOutstanding"))
+        if shares is None or shares <= 0:
+            return json.dumps({"error": "Valid shares outstanding are required.", "ticker": ticker.upper()})
 
         # Validate inputs
-        if discount_rate <= terminal_growth_rate:
+        if (not all(math.isfinite(x) for x in (growth_rate, discount_rate, terminal_growth_rate))
+                or growth_rate <= -1 or terminal_growth_rate <= -1
+                or discount_rate <= 0 or discount_rate <= terminal_growth_rate):
             return json.dumps({
-                "error": "Discount rate must be greater than terminal growth rate.",
+                "error": "Rates must be finite; growth rates must exceed -1, and discount rate must exceed zero and terminal growth.",
                 "ticker": ticker.upper(),
             })
 
         # --- 5-Year FCF Projections ---
         projected_fcf = []
         present_values = []
+        total_pv_fcf = 0.0
         for year in range(1, 6):
             fcf_year = base_fcf * ((1 + growth_rate) ** year)
             pv = fcf_year / ((1 + discount_rate) ** year)
+            total_pv_fcf += pv
             projected_fcf.append(round(fcf_year / 1e6, 2))   # in millions
             present_values.append(round(pv / 1e6, 2))
 
@@ -149,24 +157,24 @@ def run_dcf_model(
         pv_terminal    = terminal_value / ((1 + discount_rate) ** 5)
 
         # --- Enterprise Value & Intrinsic Price ---
-        total_pv_fcf  = sum(present_values) * 1e6
         intrinsic_ev  = total_pv_fcf + pv_terminal
 
         # Equity value = EV + Cash - Debt
-        cash = float(info.get("totalCash") or 0)
-        debt = float(info.get("totalDebt") or 0)
+        cash = _safe_float(info.get("totalCash"))
+        debt = _safe_float(info.get("totalDebt"))
+        if cash is None or debt is None or cash < 0 or debt < 0:
+            return json.dumps({"error": "Finite, nonnegative cash and debt inputs are required.", "ticker": ticker.upper()})
         equity_value  = intrinsic_ev + cash - debt
         intrinsic_per_share = equity_value / shares if shares > 0 else 0
 
-        current_price = float(
-            info.get("currentPrice") or info.get("regularMarketPrice") or 0
-        )
-        upside = ((intrinsic_per_share - current_price) / current_price * 100) if current_price > 0 else None
+        current_price = _safe_float(info.get("currentPrice") or info.get("regularMarketPrice"))
+        upside = ((intrinsic_per_share - current_price) / current_price * 100) if current_price is not None and current_price > 0 else None
 
         result = {
             "ticker":          ticker.upper(),
             "company_name":    info.get("longName", ticker.upper()),
             "model":           "5-Year DCF + Terminal Value (Gordon Growth)",
+            "limitations": "Illustrative only: provider freeCashflow is an unverified proxy for unlevered FCFF. Reconcile cash-flow definitions, reinvestment, WACC and valuation-date inputs before investment use.",
             "inputs": {
                 "base_fcf_M":          round(base_fcf / 1e6, 2),
                 "growth_rate_pct":     round(growth_rate * 100, 1),
@@ -184,28 +192,29 @@ def run_dcf_model(
             "terminal_value": {
                 "terminal_value_M":     round(terminal_value / 1e6, 2),
                 "pv_terminal_value_M":  round(pv_terminal / 1e6, 2),
-                "tv_pct_of_total":      round(pv_terminal / (sum(present_values) * 1e6 + pv_terminal) * 100, 1),
+                "tv_pct_of_total":      round(pv_terminal / intrinsic_ev * 100, 1),
             },
             "valuation": {
-                "sum_pv_fcf_M":          round(sum(present_values), 2),
+                "sum_pv_fcf_M":          round(total_pv_fcf / 1e6, 2),
                 "intrinsic_ev_M":        round(intrinsic_ev / 1e6, 2),
                 "cash_M":                round(cash / 1e6, 2),
                 "debt_M":                round(debt / 1e6, 2),
                 "equity_value_M":        round(equity_value / 1e6, 2),
                 "intrinsic_value_per_share": round(intrinsic_per_share, 2),
-                "current_price":         round(current_price, 2),
+                "current_price":         round(current_price, 2) if current_price is not None else None,
                 "upside_downside_pct":   round(upside, 1) if upside is not None else None,
                 "verdict": (
-                    "SIGNIFICANTLY UNDERVALUED" if upside and upside > 30
-                    else "SLIGHTLY UNDERVALUED"  if upside and upside > 15
-                    else "FAIRLY VALUED"         if upside and upside >= -15
-                    else "SLIGHTLY OVERVALUED"   if upside and upside >= -30
+                    "INSUFFICIENT_DATA" if upside is None
+                    else "SIGNIFICANTLY UNDERVALUED" if upside > 30
+                    else "SLIGHTLY UNDERVALUED"  if upside > 15
+                    else "FAIRLY VALUED"         if upside >= -15
+                    else "SLIGHTLY OVERVALUED"   if upside >= -30
                     else "SIGNIFICANTLY OVERVALUED"
                 ),
             },
         }
 
-        return json.dumps(result, indent=2, default=str)
+        return json.dumps(result, indent=2, default=str, allow_nan=False)
 
     except Exception as e:
         return json.dumps({"error": str(e), "ticker": ticker})

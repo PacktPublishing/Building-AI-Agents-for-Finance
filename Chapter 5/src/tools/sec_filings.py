@@ -34,7 +34,7 @@ async def get_risk_factors(ticker: str) -> str:
 
     Returns:
         Formatted string with key risk factors from the filing.
-        Returns a descriptive message if filing cannot be retrieved.
+        Raises ValueError if no usable filing excerpt can be retrieved.
     """
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
@@ -62,7 +62,9 @@ async def get_risk_factors(ticker: str) -> str:
 
                     # Get filing text snippet
                     highlight = hits[0].get("highlight", {})
-                    snippets = highlight.get("text", ["No excerpt available"])
+                    snippets = [s for s in highlight.get("text", []) if isinstance(s, str) and s.strip()]
+                    if not snippets:
+                        raise ValueError(f"No filing excerpt available for {ticker}")
 
                     risk_text = "\n".join(snippets[:5])  # First 5 snippets
 
@@ -76,7 +78,7 @@ async def get_risk_factors(ticker: str) -> str:
                     )
 
             # Fallback: provide a structured response indicating data was not found
-            return (
+            raise ValueError(
                 f"Risk Factors for {ticker}\n"
                 f"Source: SEC EDGAR (search returned no results)\n"
                 f"{'=' * 50}\n\n"
@@ -87,7 +89,7 @@ async def get_risk_factors(ticker: str) -> str:
             )
 
     except Exception as e:
-        return (
+        raise ValueError(
             f"Risk Factors for {ticker}\n"
             f"Source: SEC EDGAR (error)\n"
             f"{'=' * 50}\n\n"
@@ -104,7 +106,7 @@ async def get_filing_summary(ticker: str, filing_type: str = "10-K") -> str:
         filing_type: SEC filing type ('10-K', '10-Q', '8-K').
 
     Returns:
-        Summary text from the filing, or error message.
+        Summary text from the filing. Raises ValueError on retrieval failure.
     """
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
@@ -131,7 +133,7 @@ async def get_filing_summary(ticker: str, filing_type: str = "10-K") -> str:
                         f"Entity: {filing.get('entity_name', ticker)}\n"
                     )
 
-        return f"No {filing_type} filing found for {ticker} in recent filings."
+        raise ValueError(f"No {filing_type} filing found for {ticker} in recent filings.")
 
     except Exception as e:
-        return f"Error searching for {filing_type} filing: {str(e)}"
+        raise ValueError(f"Error searching for {filing_type} filing") from e

@@ -142,8 +142,7 @@ def check_api_key(key_name: str) -> bool:
     """Check if an API key is set and print its status."""
     key = os.getenv(key_name)
     status = "+" if key else "X"
-    masked = key[:10] + "..." if key else "Not found"
-    print(f"  [{status}] {key_name}: {masked}")
+    print(f"  [{status}] {key_name}: {'configured' if key else 'not configured'}")
     return bool(key)
 
 
@@ -151,16 +150,8 @@ def check_all_keys() -> bool:
     """Check all required API keys and return True if all are present."""
     print("Checking API keys...")
 
-    # LLM provider key — check whichever provider is configured
-    llm_ok = False
-    if os.getenv("OPENAI_API_KEY"):
-        check_api_key("OPENAI_API_KEY")
-        llm_ok = True
-    elif os.getenv("ANTHROPIC_API_KEY"):
-        check_api_key("ANTHROPIC_API_KEY")
-        llm_ok = True
-    else:
-        print("  [X] No LLM API key found (set OPENAI_API_KEY or ANTHROPIC_API_KEY)")
+    # The supplied model configuration and dependency extras use OpenAI.
+    llm_ok = check_api_key("OPENAI_API_KEY")
 
     data_keys = ["FINANCIAL_DATASETS_API_KEY", "TAVILY_API_KEY"]
     results = [check_api_key(k) for k in data_keys]

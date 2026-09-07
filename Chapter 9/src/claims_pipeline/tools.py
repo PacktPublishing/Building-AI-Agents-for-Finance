@@ -104,6 +104,35 @@ async def parse_documents(ctx: Context) -> str:
     return f"Parsed {len(parsed)} documents."
 
 
+def coverage_evidence(claim: dict, policy: dict) -> tuple[list[str], bool]:
+    """Return supported denial codes and whether basic lab evidence is complete.
+
+    Exclusion matching is a simplified lab rule, not a legal coverage assessment.
+    """
+    from datetime import date
+
+    try:
+        loss = date.fromisoformat(claim["date_of_loss"])
+        start = date.fromisoformat(policy["inception_date"])
+        end = date.fromisoformat(policy["expiration_date"])
+    except (KeyError, TypeError, ValueError):
+        return [], False
+    if start > end:
+        return [], False
+    codes = []
+    if not start <= loss <= end:
+        codes.append("OUTSIDE_POLICY_PERIOD")
+    exclusions = policy.get("exclusions")
+    if not isinstance(exclusions, list) or not all(isinstance(x, str) and x.strip() for x in exclusions):
+        return codes, False
+    description = claim.get("description", "")
+    if not isinstance(description, str) or not description.strip():
+        return codes, False
+    if any(x.lower() in description.lower() for x in exclusions):
+        codes.append("POLICY_EXCLUSION")
+    return codes, True
+
+
 async def verify_coverage(ctx: Context) -> str:
     """Check policy coverage for this claim.
 
@@ -116,26 +145,31 @@ async def verify_coverage(ctx: Context) -> str:
     policy = state.get("policy", {})
 
     # Check basic coverage
-    is_covered = True
+    reason_codes, evidence_complete = coverage_evidence(claim, policy)
+    is_covered = evidence_complete and not reason_codes
     exclusions = []
     reasoning_parts = []
+    if not evidence_complete:
+        reasoning_parts.append("Coverage evidence is incomplete or invalid; human review required.")
 
     # Check policy period
     dol = claim.get("date_of_loss", "")
     inception = policy.get("inception_date", "")
     expiration = policy.get("expiration_date", "")
 
-    if dol and inception and expiration:
-        if dol < inception or dol > expiration:
-            is_covered = False
-            reasoning_parts.append(
-                f"Date of loss {dol} outside policy period "
-                f"({inception} to {expiration})."
-            )
+    if "OUTSIDE_POLICY_PERIOD" in reason_codes:
+        reasoning_parts.append(
+            f"Date of loss {dol} outside policy period "
+            f"({inception} to {expiration})."
+        )
 
     # Check exclusions
-    for exclusion in policy.get("exclusions", []):
-        if exclusion.lower() in claim.get("description", "").lower():
+    policy_exclusions = policy.get("exclusions", [])
+    description = claim.get("description", "")
+    for exclusion in (policy_exclusions if isinstance(policy_exclusions, list) else []):
+        if not isinstance(exclusion, str) or not exclusion.strip():
+            continue
+        if isinstance(description, str) and exclusion.lower() in description.lower():
             exclusions.append(exclusion)
 
     if exclusions:
@@ -155,6 +189,8 @@ async def verify_coverage(ctx: Context) -> str:
     claim["deductible"] = policy.get("deductible", 0)
     claim["exclusions_found"] = exclusions
     claim["coverage_reasoning"] = " ".join(reasoning_parts)
+    claim["coverage_reason_codes"] = reason_codes
+    claim["coverage_evidence_complete"] = evidence_complete
     claim["status"] = "coverage_check"
 
     log_audit(state, "CoverageAgent",
@@ -296,14 +332,23 @@ async def make_decision(ctx: Context) -> str:
     claim = state["claim"]
 
     # Decision logic
+    evidence_codes, evidence_complete = coverage_evidence(claim, state.get("policy", {}))
+    reason_codes = []
     if not claim.get("coverage_verified", False):
-        decision = "DENIED"
-        reasoning = (
-            f"Claim denied: {claim.get('coverage_reasoning', 'Coverage not verified')}. "
-            f"Exclusions: {claim.get('exclusions_found', [])}."
-        )
+        if evidence_complete and evidence_codes:
+            decision = "DENIED"
+            reason_codes = evidence_codes
+            reasoning = (
+                f"Claim denied on recorded coverage evidence: {evidence_codes}. "
+                f"{claim.get('coverage_reasoning', '')}"
+            )
+        else:
+            decision = "ESCALATED"
+            reason_codes = ["INSUFFICIENT_COVERAGE_EVIDENCE"]
+            reasoning = "Coverage could not be established from the supplied evidence; refer for human review."
     elif claim.get("fraud_recommendation") == "investigate":
         decision = "ESCALATED"
+        reason_codes = ["FRAUD_REVIEW_REQUIRED"]
         reasoning = (
             f"Claim escalated for fraud investigation. "
             f"Fraud score: {claim.get('fraud_score', 0)}/100. "
@@ -311,6 +356,7 @@ async def make_decision(ctx: Context) -> str:
         )
     else:
         decision = "APPROVED"
+        reason_codes = ["COVERAGE_VERIFIED"]
         reasoning = (
             f"Claim approved. Coverage verified under "
             f"{claim.get('coverage_reasoning', 'policy')}. "
@@ -320,6 +366,7 @@ async def make_decision(ctx: Context) -> str:
 
     claim["decision"] = decision
     claim["decision_reasoning"] = reasoning
+    claim["decision_reason_codes"] = reason_codes
     claim["status"] = decision.lower()
 
     log_audit(state, "DecisionAgent",
@@ -329,7 +376,7 @@ async def make_decision(ctx: Context) -> str:
 
 
 async def validate_compliance(ctx: Context) -> str:
-    """Validate decision against regulatory requirements.
+    """Apply the lab's evidence checks; not a legal compliance certification.
 
     Used by: ComplianceAgent (guardrail — has veto power).
     Reads: decision, reasoning from claim.
@@ -341,22 +388,28 @@ async def validate_compliance(ctx: Context) -> str:
 
     # Check 1: Denial reason validity
     if claim.get("decision") == "DENIED":
-        valid_reasons = [
-            "not covered", "exclusion", "policy lapsed",
-            "fraud confirmed", "outside policy period",
-        ]
-        reasoning = claim.get("decision_reasoning", "").lower()
-        if not any(r in reasoning for r in valid_reasons):
-            issues.append(
-                "Denial reason may not be valid under "
-                "applicable regulation."
-            )
+        evidence_codes, complete = coverage_evidence(claim, state.get("policy", {}))
+        codes = claim.get("decision_reason_codes", [])
+        if (not complete or not evidence_codes or not isinstance(codes, list)
+                or not all(isinstance(code, str) for code in codes)
+                or set(codes) != set(evidence_codes)):
+            issues.append("Denial requires reason codes supported by the policy and loss evidence.")
+        if claim.get("coverage_verified") is not False:
+            issues.append("Denial contradicts the recorded coverage result.")
+
+    if claim.get("decision") not in {"APPROVED", "DENIED", "ESCALATED"}:
+        issues.append("Unrecognized decision value.")
+    if claim.get("decision") == "APPROVED":
+        codes, complete = coverage_evidence(claim, state.get("policy", {}))
+        if not complete or codes or claim.get("coverage_verified") is not True:
+            issues.append("Approval requires complete, consistent coverage evidence.")
+        if claim.get("fraud_recommendation") == "investigate":
+            issues.append("Approval cannot bypass a fraud referral.")
 
     # Check 2: Reasoning completeness
     if len(claim.get("decision_reasoning", "")) < 50:
         issues.append(
-            "Decision reasoning insufficient for "
-            "regulatory audit."
+            "Decision reasoning is missing or too short for the lab's documentation check."
         )
 
     # Check 3: All pipeline stages completed
@@ -369,12 +422,14 @@ async def validate_compliance(ctx: Context) -> str:
 
     if issues:
         claim["status"] = "compliance_review"
+        claim["compliance_issues"] = issues
         log_audit(state, "ComplianceAgent",
                   "BLOCKED — compliance issues", str(issues))
         await ctx.store.set("state", state)
         return f"BLOCKED: {issues}"
     else:
+        claim["compliance_issues"] = []
         log_audit(state, "ComplianceAgent",
-                  "APPROVED — decision is compliant")
+                  "PASSED — lab evidence checks")
         await ctx.store.set("state", state)
-        return "Decision validated. Compliant."
+        return "Decision validated against the lab's evidence checks."
