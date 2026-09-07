@@ -91,15 +91,15 @@ class CompanyMetrics(BaseModel):
     ticker: str
     company_name: str = ""
     revenue: float = Field(description="Revenue in millions USD")
-    revenue_growth: float = Field(
-        default=0.0, description="Year-over-year revenue growth %"
+    revenue_growth: float | None = Field(
+        default=None, description="Year-over-year revenue growth %; None if unavailable"
     )
     eps: float = Field(description="Earnings per share")
-    pe_ratio: float = Field(default=0.0, description="Price-to-earnings ratio")
-    gross_margin: float = Field(default=0.0, description="Gross margin %")
-    operating_margin: float = Field(default=0.0, description="Operating margin %")
-    market_cap: float = Field(default=0.0, description="Market cap in billions USD")
-    period: str = Field(default="FY2024", description="Fiscal period, e.g., 'FY2024'")
+    pe_ratio: float | None = Field(default=None, description="Price-to-earnings ratio; None if unavailable or not meaningful")
+    gross_margin: float | None = Field(default=None, description="Gross margin %")
+    operating_margin: float | None = Field(default=None, description="Operating margin %")
+    market_cap: float | None = Field(default=None, description="Market cap in billions USD")
+    period: str | None = Field(default=None, description="Reported fiscal period; never inferred")
 
 
 # ---------------------------------------------------------------------------

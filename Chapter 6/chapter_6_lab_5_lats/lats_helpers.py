@@ -201,11 +201,9 @@ def _parse_score(text):
         stripped = line.strip()
         if not stripped.upper().startswith("SCORE:"):
             continue
-        try:
-            raw = float(stripped.split(":", 1)[1].strip().split()[0])
-        except (ValueError, IndexError):
-            continue
-        last = max(0.0, min(1.0, raw / 10.0))
+        match = re.fullmatch(r"SCORE:\s*(10|[1-9])", stripped, re.IGNORECASE)
+        if match:
+            last = int(match.group(1)) / 10.0
     return last
 
 

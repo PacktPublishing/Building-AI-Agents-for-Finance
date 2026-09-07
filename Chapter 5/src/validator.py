@@ -121,17 +121,30 @@ def _validate_metrics(
 ) -> None:
     """Validate a single CompanyMetrics instance for reasonableness."""
     ticker = metrics.ticker
+    invalid = False
+    if not metrics.period or not metrics.period.strip():
+        errors.append(f"{ticker}: missing reported fiscal period")
+        invalid = True
     for field in ("revenue", "revenue_growth", "eps", "pe_ratio", "gross_margin", "operating_margin", "market_cap"):
-        if not math.isfinite(getattr(metrics, field)):
+        value = getattr(metrics, field)
+        # P/E is not meaningful for zero or negative EPS. Other comparison
+        # fields are required by this lab; missing is not a reported zero.
+        if field == "pe_ratio" and value is None and metrics.eps <= 0:
+            warnings.append(f"{ticker}: P/E unavailable for non-positive EPS")
+            continue
+        if value is None or not math.isfinite(value):
             errors.append(f"{ticker}: {field} must be finite")
+            invalid = True
+    if invalid:
+        return
 
     # P/E ratio checks
-    if metrics.pe_ratio < 0:
+    if metrics.pe_ratio is not None and metrics.pe_ratio < 0:
         warnings.append(
             f"{ticker}: Negative P/E ratio ({metrics.pe_ratio}) "
             f"— company may be unprofitable or EPS data incorrect"
         )
-    elif metrics.pe_ratio > 300:
+    elif metrics.pe_ratio is not None and metrics.pe_ratio > 300:
         warnings.append(
             f"{ticker}: Extremely high P/E ratio ({metrics.pe_ratio}) "
             f"— verify EPS data or check if company is pre-profit"

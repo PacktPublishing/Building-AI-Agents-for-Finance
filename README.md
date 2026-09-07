@@ -47,7 +47,7 @@ scripts, not to every notebook.
 | Lab 1: LangChain | `langchain`, `langchain-openai` | `OPENAI_API_KEY` |
 | Lab 2: Google ADK | `google-adk`, `google-genai` | `GOOGLE_API_KEY` |
 | Lab 3: CrewAI | `crewai[tools]` | `OPENAI_API_KEY` |
-| Lab 4: AutoGen | `autogen-agentchat`, `autogen-ext`, `autogen-core` | `OPENAI_API_KEY` |
+| Lab 4: AutoGen | `autogen-agentchat`, `autogen-ext[openai]`, `autogen-core` | `OPENAI_API_KEY` |
 | Lab 5: OpenAI Agents SDK | `openai-agents` | `OPENAI_API_KEY` |
 | Lab 6: LlamaIndex | `llama-index`, `llama-index-llms-openai` | `OPENAI_API_KEY` |
 | Lab 7: Anthropic API, no tools | `anthropic` | `ANTHROPIC_API_KEY` |
@@ -88,7 +88,12 @@ require network access and available provider credits.
 - Live validation is still pending: a provider-account prerequisite prevented
   the Lab 7 run, and no test credential was available for Lab 8. Mocked responses do not establish model
   accuracy, provider availability or successful end-to-end live execution.
-- These checks cover the changed Labs 7/8 and scoring reference, not all
+- Follow-up Lab 4 check: fresh Python 3.12.14 installation, dependency check,
+  and offline model-client/agent construction passed with AutoGen packages
+  0.7.5, `openai==3.8.0`, `pydantic==2.13.5`, and `python-dotenv==1.2.3`.
+  Include the `[openai]` extra; installing bare `autogen-ext` is insufficient.
+  This was not a live notebook run.
+- These checks cover the changed Labs 4/7/8 and scoring reference, not all
   Chapter 3 examples or all bake-off dependency combinations.
 
 #### Cross-chapter correction checks (7 September 2026)
@@ -97,10 +102,25 @@ The correction branch also aligns Chapter 2 notebook annotations, Chapter 4
 DCF inputs and verdicts, Chapter 5 failed-research handling, Chapter 9 claims
 evidence checks and referral terminology, and Chapter 11 CI setup wording.
 The source and notebook versions of the affected Chapter 5/9 controls are
-covered by offline fixture tests. There are 33 passing tests in total; run
+covered by offline fixture tests. The follow-up audit brings the total to 51
+passing tests; run
 `python -m unittest discover -s tests -v` with the packages listed above and
 `httpx==0.28.1`. These tests execute the relevant function bodies and mocked
 HTTP calls, not the complete framework workflows or live providers.
+
+The follow-up audit also fixes the Chapter 2 four-attempt limit and rejects
+invalid Chapter 6 evaluator scores (only integer SCORE values 1-10 are valid).
+Chapter 5 keeps unavailable comparison metrics as null and does not invent a
+fiscal period. Its lab validator requires the displayed comparison fields;
+P/E may be unavailable when EPS is non-positive. Reported zero values remain
+distinct from missing data. This is a completeness check, not source verification.
+The financial-data adapter follows the provider's documented EPS/report-date
+fields, derives margins from income-statement amounts, and fetches market cap
+from the financial-metrics snapshot (not the price snapshot). Documentation-shaped
+offline fixtures cover those mappings; live account/data verification remains pending.
+Chapter 11's CI template now emits an always-run `kyc-eval-required` gate,
+with conditional evaluation inside the workflow. Gate logic was tested offline;
+the template has not been installed or exercised on GitHub Actions.
 
 The DCF tool is educational: provider `freeCashflow` is not verified unlevered
 FCFF. It no longer substitutes operating cash flow, invents missing share

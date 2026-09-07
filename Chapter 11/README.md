@@ -63,10 +63,16 @@ threshold and the weighted score is `>= 0.85`; nonzero otherwise. CI
 can use this as a production-promotion gate after configuration.
 
 To activate CI, copy `ci/github_actions.yml` into the repository-root
-`.github/workflows/` directory. Its triggers cover relevant Chapter 11 changes.
-Configure its evaluation status check as required in branch protection or
-repository rules if failed evaluations must prevent merging. Merely including
-the template in `ci/` does not activate GitHub Actions or block merges.
+`.github/workflows/` directory. The workflow starts on every pull request and
+push to main; evaluation runs for changes to Chapter 11 or workflow files.
+Configure **kyc-eval-required** (the final gate, not the conditional scorecard
+job) as required in branch protection or repository rules. It passes unrelated
+changes only after change detection succeeds, and blocks relevant changes if
+evaluation fails, is cancelled or is unexpectedly skipped. Do not add
+workflow-level path filters: skipped required workflows can leave unrelated
+pull requests pending. The summary is supplied as a downloadable artifact;
+the workflow needs no pull-request write permission. Merely including the
+template in `ci/` does not activate GitHub Actions or block merges.
 
 ## With a real KYC pipeline
 

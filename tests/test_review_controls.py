@@ -44,7 +44,11 @@ class ResearchControls(unittest.IsolatedAsyncioTestCase):
         return self.ns["ResearchPlan"](question="Compare NVDA", sub_tasks=[self.ns["SubTask"](id=1, description="Get NVDA financial metrics", data_sources=["financial_api"], status=status, dependencies=dependencies or [])])
 
     def metrics(self, **kwargs):
-        return self.ns["CompanyMetrics"](ticker="NVDA", revenue=100, eps=2, **kwargs).model_dump_json()
+        fields = dict(ticker="NVDA", revenue=100, eps=2, revenue_growth=5,
+                      pe_ratio=10, gross_margin=50, operating_margin=20,
+                      market_cap=100, period="FY2024")
+        fields.update(kwargs)
+        return self.ns["CompanyMetrics"](**fields).model_dump_json()
 
     def test_retrieval_error_does_not_count_as_evidence(self):
         result = self.ns["validate_research"](self.plan(), {1: "Error retrieving filing data for NVDA: service unavailable"}, ["NVDA"])
