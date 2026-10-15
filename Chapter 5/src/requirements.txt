@@ -1,5 +1,5 @@
 # Chapter 5 deep search agent — validated versions
-pydantic-ai-slim[openai]==2.9.0
+pydantic-ai-slim[openai]==2.53.0
 pydantic>=2.7
 httpx>=0.27
 python-dotenv>=1.0
