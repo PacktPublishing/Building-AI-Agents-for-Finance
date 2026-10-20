@@ -17,4 +17,4 @@ llama-index-llms-openai==0.7.9
 mistralai==2.6.0
 crewai==1.15.2
 google-adk==2.4.0
-claude-agent-sdk==0.2.116
+claude-agent-sdk==0.2.121
